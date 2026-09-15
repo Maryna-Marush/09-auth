@@ -1,11 +1,9 @@
 import type { Metadata } from 'next';
-import { fetchNoteById } from '@/lib/api'; // Перевірте шлях до вашої функції API
-
+import { fetchNoteById } from '@/lib/api/clientApi'; 
 type Props = {
   params: Promise<{ id: string }>;
 };
 
-// 1. Асинхронна генерація SEO-метаданих
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
 
@@ -20,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       openGraph: {
         title,
         description,
-        url: `https://notehub.com/notes/${id}`, // Або ваш живий Vercel URL
+        url: `https://notehub.com/notes/${id}`, 
         images: [
           {
             url: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg',
@@ -39,13 +37,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-// 2. Компонент сторінки (використовуємо params через await)
-export default async function NotePage({ params }: Props) {
-  const { id } = await params; // ✅ Використовуємо params, щоб ESLint не видавав помилку
 
+export default async function NotePage({ params }: Props) {
+  const { id } = await params; 
   return (
     <main>
-      {/* Тут відображаються деталі нотатки */}
+      {}
       <h1>Note ID: {id}</h1>
     </main>
   );

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNoteStore } from '@/lib/store/noteStore';
-import { createNote } from '@/lib/api';
+import { createNote } from '@/lib/api/clientApi';
 import { NoteTag } from '@/types/note';
 import css from './NoteForm.module.css';
 
@@ -12,38 +12,38 @@ export default function NoteForm() {
   const queryClient = useQueryClient();
   const { draft, setDraft, clearDraft } = useNoteStore();
 
-  // Обробка зміни полів та автоматичне збереження чернетки в Zustand
+  
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     setDraft({ [e.target.name]: e.target.value });
   };
 
-  // Обробник відправки форми через formAction
+
   const handleSubmit = async (formData: FormData) => {
     const title = formData.get('title') as string;
     const content = formData.get('content') as string;
     
-    // ✅ Явно приводимо тип string до NoteTag
+
     const tag = formData.get('tag') as NoteTag;
 
     try {
       await createNote({ title, content, tag });
       
-      // 1. Очищаємо чернетку
+    
       clearDraft();
       
-      // 2. Інвалідуємо кеш React Query для завантаження нових даних
+      
       await queryClient.invalidateQueries({ queryKey: ['notes'] });
       
-      // 3. Перенаправляємо на список усіх нотаток
+      
       router.push('/notes/filter/all');
     } catch (error) {
       console.error('Failed to create note:', error);
     }
   };
 
-  // Кнопка Cancel повертає назад, збережена чернетка залишається
+  
   const handleCancel = () => {
     router.back();
   };
