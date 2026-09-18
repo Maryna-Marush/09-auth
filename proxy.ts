@@ -73,7 +73,15 @@ export default async function proxy(request: NextRequest) {
         });
       }
 
-      return NextResponse.next();
+      const nextResponse = NextResponse.next();
+
+      const updatedCookies = cookieStore.toString();
+
+      if (updatedCookies) {
+        nextResponse.headers.set('Set-Cookie', updatedCookies);
+      }
+
+      return nextResponse;
     } catch {
       return NextResponse.redirect(new URL('/sign-in', request.url));
     }
