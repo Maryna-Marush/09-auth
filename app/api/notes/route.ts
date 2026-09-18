@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
           error: error.message,
           response: error.response?.data,
         },
-        { status: error.response?.status ?? 500 }
+        { status: error.status }
       );
     }
 
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
           error: error.message,
           response: error.response?.data,
         },
-        { status: error.response?.status ?? 500 }
+        { status: error.status }
       );
     }
 
