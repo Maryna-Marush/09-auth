@@ -32,17 +32,78 @@ export default async function proxy(request: NextRequest) {
     try {
       const response = await checkSession();
 
-      const nextResponse = NextResponse.next();
-
       const setCookie = response.headers['set-cookie'];
 
       if (setCookie) {
-        setCookie.forEach(cookie => {
-          nextResponse.headers.append('set-cookie', cookie);
+        const cookiesArray = Array.isArray(setCookie)
+          ? setCookie
+          : [setCookie];
+
+        cookiesArray.forEach(cookieString => {
+          const [cookiePair, ...attributes] = cookieString.split(';');
+          const [name, ...valueParts] = cookiePair.split('=');
+
+          if (!name) return;
+
+          const value = valueParts.join('=');
+
+          const cookieOptions: {
+            expires?: Date;
+            maxAge?: number;
+            domain?: string;
+            path?: string;
+            secure?: boolean;
+            httpOnly?: boolean;
+            sameSite?: 'strict' | 'lax' | 'none';
+          } = {};
+
+          attributes.forEach(attribute => {
+            const [key, ...parts] = attribute.trim().split('=');
+            const lowerKey = key.toLowerCase();
+            const attributeValue = parts.join('=');
+
+            if (lowerKey === 'path') {
+              cookieOptions.path = attributeValue;
+            }
+
+            if (lowerKey === 'domain') {
+              cookieOptions.domain = attributeValue;
+            }
+
+            if (lowerKey === 'max-age') {
+              cookieOptions.maxAge = Number(attributeValue);
+            }
+
+            if (lowerKey === 'expires') {
+              cookieOptions.expires = new Date(attributeValue);
+            }
+
+            if (lowerKey === 'secure') {
+              cookieOptions.secure = true;
+            }
+
+            if (lowerKey === 'httponly') {
+              cookieOptions.httpOnly = true;
+            }
+
+            if (lowerKey === 'samesite') {
+              const sameSite = attributeValue.toLowerCase();
+
+              if (
+                sameSite === 'strict' ||
+                sameSite === 'lax' ||
+                sameSite === 'none'
+              ) {
+                cookieOptions.sameSite = sameSite;
+              }
+            }
+          });
+
+          cookieStore.set(name.trim(), value, cookieOptions);
         });
       }
 
-      return nextResponse;
+      return NextResponse.next();
     } catch {
       return NextResponse.redirect(new URL('/sign-in', request.url));
     }
