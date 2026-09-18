@@ -35,6 +35,8 @@ export default async function proxy(request: NextRequest) {
 
       const setCookie = response.headers['set-cookie'];
 
+      const nextResponse = NextResponse.next();
+
       if (setCookie) {
         const cookiesArray = Array.isArray(setCookie)
           ? setCookie
@@ -44,7 +46,7 @@ export default async function proxy(request: NextRequest) {
           const parsedCookie = parseSetCookie(cookieString);
 
           if (parsedCookie.name && parsedCookie.value !== undefined) {
-            cookieStore.set({
+            const cookie = {
               name: parsedCookie.name,
               value: parsedCookie.value,
               ...(parsedCookie.expires && {
@@ -68,17 +70,12 @@ export default async function proxy(request: NextRequest) {
               ...(parsedCookie.sameSite && {
                 sameSite: parsedCookie.sameSite,
               }),
-            });
+            };
+
+            cookieStore.set(cookie);
+            nextResponse.cookies.set(cookie);
           }
         });
-      }
-
-      const nextResponse = NextResponse.next();
-
-      const updatedCookies = cookieStore.toString();
-
-      if (updatedCookies) {
-        nextResponse.headers.set('Set-Cookie', updatedCookies);
       }
 
       return nextResponse;
