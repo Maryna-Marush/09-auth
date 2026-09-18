@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { parseSetCookie } from 'cookie';
 import { checkSession } from './lib/api/serverApi';
 
 const publicRoutes = ['/sign-in', '/sign-up'];
@@ -40,66 +41,35 @@ export default async function proxy(request: NextRequest) {
           : [setCookie];
 
         cookiesArray.forEach(cookieString => {
-          const [cookiePair, ...attributes] = cookieString.split(';');
-          const [name, ...valueParts] = cookiePair.split('=');
+          const parsedCookie = parseSetCookie(cookieString);
 
-          if (!name) return;
-
-          const value = valueParts.join('=');
-
-          const cookieOptions: {
-            expires?: Date;
-            maxAge?: number;
-            domain?: string;
-            path?: string;
-            secure?: boolean;
-            httpOnly?: boolean;
-            sameSite?: 'strict' | 'lax' | 'none';
-          } = {};
-
-          attributes.forEach(attribute => {
-            const [key, ...parts] = attribute.trim().split('=');
-            const lowerKey = key.toLowerCase();
-            const attributeValue = parts.join('=');
-
-            if (lowerKey === 'path') {
-              cookieOptions.path = attributeValue;
-            }
-
-            if (lowerKey === 'domain') {
-              cookieOptions.domain = attributeValue;
-            }
-
-            if (lowerKey === 'max-age') {
-              cookieOptions.maxAge = Number(attributeValue);
-            }
-
-            if (lowerKey === 'expires') {
-              cookieOptions.expires = new Date(attributeValue);
-            }
-
-            if (lowerKey === 'secure') {
-              cookieOptions.secure = true;
-            }
-
-            if (lowerKey === 'httponly') {
-              cookieOptions.httpOnly = true;
-            }
-
-            if (lowerKey === 'samesite') {
-              const sameSite = attributeValue.toLowerCase();
-
-              if (
-                sameSite === 'strict' ||
-                sameSite === 'lax' ||
-                sameSite === 'none'
-              ) {
-                cookieOptions.sameSite = sameSite;
-              }
-            }
-          });
-
-          cookieStore.set(name.trim(), value, cookieOptions);
+          if (parsedCookie.name && parsedCookie.value !== undefined) {
+            cookieStore.set({
+              name: parsedCookie.name,
+              value: parsedCookie.value,
+              ...(parsedCookie.expires && {
+                expires: parsedCookie.expires,
+              }),
+              ...(parsedCookie.maxAge !== undefined && {
+                maxAge: parsedCookie.maxAge,
+              }),
+              ...(parsedCookie.domain && {
+                domain: parsedCookie.domain,
+              }),
+              ...(parsedCookie.path && {
+                path: parsedCookie.path,
+              }),
+              ...(parsedCookie.httpOnly !== undefined && {
+                httpOnly: parsedCookie.httpOnly,
+              }),
+              ...(parsedCookie.secure !== undefined && {
+                secure: parsedCookie.secure,
+              }),
+              ...(parsedCookie.sameSite && {
+                sameSite: parsedCookie.sameSite,
+              }),
+            });
+          }
         });
       }
 
