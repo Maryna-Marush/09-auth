@@ -4,6 +4,7 @@ import { User } from '@/types/user';
 
 const getAuthHeaders = async () => {
   const cookieStore = await cookies();
+
   return {
     headers: {
       Cookie: cookieStore.toString(),
@@ -11,26 +12,32 @@ const getAuthHeaders = async () => {
   };
 };
 
-export const checkSession = async (): Promise<User | null> => {
+export const checkSession = async () => {
   const config = await getAuthHeaders();
-  const { data } = await api.get<User | null>('/auth/session', config);
-  return data;
+
+  return await api.get<User | null>('/auth/session', config);
 };
 
 export const getMe = async (): Promise<User> => {
   const config = await getAuthHeaders();
   const { data } = await api.get<User>('/users/me', config);
+
   return data;
 };
 
 export const fetchNotes = async (params?: Record<string, unknown>) => {
   const config = await getAuthHeaders();
-  const { data } = await api.get('/notes', { ...config, params });
+  const { data } = await api.get('/notes', {
+    ...config,
+    params,
+  });
+
   return data;
 };
 
 export const fetchNoteById = async (id: string) => {
   const config = await getAuthHeaders();
   const { data } = await api.get(`/notes/${id}`, config);
+
   return data;
 };

@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const rawTag = request.nextUrl.searchParams.get('tag') ?? '';
     const tag = rawTag === 'All' ? '' : rawTag;
 
-    const res = await api.get('/notes', {
+    const res = await api('/notes', {
       params: {
         ...(search !== '' && { search }),
         page,

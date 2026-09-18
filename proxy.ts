@@ -1,38 +1,31 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-
-
-const PUBLIC_ROUTES = ['/login', '/register'];
-
-
-const PROTECTED_ROUTES = ['/dashboard', '/profile'];
-
-export function proxy(request: NextRequest) {
+import { NextRequest, NextResponse } from 'next/server';
+import { checkSession } from './lib/api/serverApi';
+const publicRoutes = ['/sign-in', '/sign-up'];
+const privateRoutes = ['/profile/:path*', '/notes/:path*'];
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
-
-  const token = request.cookies.get('token')?.value;
-
-  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
-  const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
-
-  
-  if (isProtectedRoute && !token) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  const accessToken = request.cookies.get('accessToken')?.value;
+  const refreshToken = request.cookies.get('refreshToken')?.value;
+  const isPublicRoute = publicRoutes.includes(pathname);
+  const isPrivateRoute = privateRoutes.some(route => {
+    const baseRoute = route.replace('/:path*', '');
+    return pathname === baseRoute || pathname.startsWith(`${baseRoute}/`);
+  });
+  if (isPrivateRoute && !accessToken && !refreshToken) {
+    return NextResponse.redirect(new URL('/sign-in', request.url));
   }
-
-  if (isPublicRoute && token) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+  if (isPrivateRoute && !accessToken && refreshToken) {
+    try {
+      await checkSession();
+    } catch {
+      return NextResponse.redirect(new URL('/sign-in', request.url));
+    }
   }
-
-
+  if (isPublicRoute && accessToken) {
+    return NextResponse.redirect(new URL('/profile', request.url));
+  }
   return NextResponse.next();
 }
-
-
 export const config = {
-  matcher: [
- 
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  matcher: ['/profile/:path*', '/notes/:path*', '/sign-in', '/sign-up'],
 };

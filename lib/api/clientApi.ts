@@ -1,5 +1,6 @@
 import { api } from './api';
 import { User } from '@/types/user';
+import type { Note, CreateNoteDto } from '@/types/note';
 
 export interface RegisterDto {
   email: string;
@@ -14,6 +15,11 @@ export interface LoginDto {
 export interface UpdateUserDto {
   username?: string;
   avatar?: string;
+}
+
+interface FetchNotesResponse {
+  notes: Note[];
+  totalPages: number;
 }
 
 export const register = async (dto: RegisterDto): Promise<User> => {
@@ -45,22 +51,24 @@ export const updateMe = async (dto: UpdateUserDto): Promise<User> => {
   return data;
 };
 
-export const fetchNotes = async (params?: Record<string, unknown>) => {
-  const { data } = await api.get('/notes', { params });
+export const fetchNotes = async (
+  params?: Record<string, unknown>
+): Promise<FetchNotesResponse> => {
+  const { data } = await api.get<FetchNotesResponse>('/notes', { params });
   return data;
 };
 
-export const fetchNoteById = async (id: string) => {
-  const { data } = await api.get(`/notes/${id}`);
+export const fetchNoteById = async (id: string): Promise<Note> => {
+  const { data } = await api.get<Note>(`/notes/${id}`);
   return data;
 };
 
-export const createNote = async (dto: { title: string; content: string; tag: string }) => {
-  const { data } = await api.post('/notes', dto);
+export const createNote = async (dto: CreateNoteDto): Promise<Note> => {
+  const { data } = await api.post<Note>('/notes', dto);
   return data;
 };
 
-export const deleteNote = async (id: string) => {
-  const { data } = await api.delete(`/notes/${id}`);
+export const deleteNote = async (id: string): Promise<Note> => {
+  const { data } = await api.delete<Note>(`/notes/${id}`);
   return data;
 };
